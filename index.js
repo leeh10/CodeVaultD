@@ -11,7 +11,8 @@ const client = new Client({
     ]
 });
 
-const TOKEN = process.env.MI_BOT_TOKEN_AQUI;
+// Lee de forma segura el Token configurado en las variables de entorno de Render
+const TOKEN = process.env.MI_BOT_TOKEN_AQUI; 
 
 client.on('ready', () => {
     console.log(`[+] Bot conectado como: ${client.user.tag}`);
@@ -79,7 +80,7 @@ function motorOfuscadorFuerte(codigoOriginal) {
 client.on('messageCreate', async (message) => {
     if (message.author.bot) return;
 
-    // Comando: !obfuscate
+    // Comando: !obfuscate o !ofuscar
     if (message.content.startsWith('!obfuscate') || message.content.startsWith('!ofuscar')) {
         const adjunto = message.attachments.first();
 
@@ -149,3 +150,13 @@ client.on('messageCreate', async (message) => {
 
 // Iniciar el bot de Discord
 client.login(TOKEN);
+
+// --- SOLUCIÓN PARA RENDER WEB SERVICE ---
+// Servidor HTTP simulado para abrir un puerto y forzar el estado "Live" en Render de inmediato
+const http = require('http');
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Zyrox VM Engine Online');
+}).listen(process.env.PORT || 3000, () => {
+    console.log('[+] Puerto web simulado abierto con éxito para evitar bloqueos en Render.');
+});
