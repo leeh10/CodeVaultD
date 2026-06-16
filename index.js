@@ -19,9 +19,9 @@ client.on('ready', () => {
 
 // --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD EJECUTABLE ---
 function motorOfuscadorFuerte(codigoOriginal) {
-    let scriptProtegido = `-- [[ ZYROX VM OBFUSCATION v2.1 ]] --\n\n`;
+    let scriptProtegido = `-- [[ ZYROX VM OBFUSCATION v2.2 ]] --\n\n`;
     
-    // 1. Inyección del decodificador interno de Base64 en Lua para que el script sea ejecutable solo en memoria
+    // 1. Inyección del decodificador interno de Base64 en Lua para ejecuciones en memoria limpia
     scriptProtegido += `local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'\n`;
     scriptProtegido += `local function BufferDecode(data)\n`;
     scriptProtegido += `    data = string.gsub(data, '[^'..b..'=]', '')\n`;
@@ -37,9 +37,13 @@ function motorOfuscadorFuerte(codigoOriginal) {
     scriptProtegido += `    end))\n`;
     scriptProtegido += `end\n\n`;
 
-    // 2. Trampas Anti-Deobfuscator / Anti-Análisis
-    scriptProtegido += `if hookfunction or setreadonly or debug.setupvalue then \n`;
-    scriptProtegido += `    error("/app/unveilr/infinite_loop_err"); -- Rompe los bots de análisis automatizado\n`;
+    // 2. Trampas Anti-Deobfuscator Inteligentes (Compatibles con Delta / Android Exploits)
+    scriptProtegido += `local _isBot = false\n`;
+    scriptProtegido += `if (setupvalue and tostring(setupvalue):find("unveilr")) or (hookfunction and tostring(hookfunction):find("mock")) then \n`;
+    scriptProtegido += `    _isBot = true\n`;
+    scriptProtegido += `end\n\n`;
+    scriptProtegido += `if _isBot then\n`;
+    scriptProtegido += `    error("/app/unveilr/infinite_loop_err");\n`;
     scriptProtegido += `    while true do end\n`;
     scriptProtegido += `end\n\n`;
 
@@ -63,15 +67,18 @@ function motorOfuscadorFuerte(codigoOriginal) {
     }
     scriptProtegido += `}\n\n`;
 
-    // 4. El ciclo ejecutor de la VM utilizando el decodificador nativo
+    // 4. El ciclo ejecutor de la VM utilizando loadstring compatible con exploits móviles
     scriptProtegido += `while _bytecode[_vm_state] do\n`;
     scriptProtegido += `    local _current = _bytecode[_vm_state]\n`;
     scriptProtegido += `    local _decrypted = BufferDecode(_current)\n`;
     scriptProtegido += `    local _loaded, _err = loadstring(_decrypted)\n`;
     scriptProtegido += `    if _loaded then\n`;
-    scriptProtegido += `        _loaded()\n`;
+    scriptProtegido += `        local _status, _res = pcall(_loaded)\n`;
+    scriptProtegido += `        if not _status then\n`;
+    scriptProtegido += `            warn("Runtime Error: " .. tostring(_res))\n`;
+    scriptProtegido += `        end\n`;
     scriptProtegido += `    else\n`;
-    scriptProtegido += `        warn("VM Execution Error: " .. tostring(_err))\n`;
+    scriptProtegido += `        warn("VM Compilation Error: " .. tostring(_err))\n`;
     scriptProtegido += `    end\n`;
     scriptProtegido += `    _vm_state = _vm_state + 1\n`;
     scriptProtegido += `end\n`;
@@ -118,10 +125,10 @@ client.on('messageCreate', async (message) => {
             const embedListo = new EmbedBuilder()
                 .setColor('#00FF66')
                 .setTitle('⚡ ¡Script Virtualizado con Éxito!')
-                .setDescription('La estructura de la VM ha sido inyectada y el script es completamente ejecutable en entornos compatibles.')
+                .setDescription('La estructura de la VM ha sido adaptada. Es indetectable para bots comunes y 100% compatible con ejecutores móviles.')
                 .addFields(
                     { name: 'Archivo Original', value: `\`${adjunto.name}\``, inline: true },
-                    { name: 'Estado de Ejecución', value: '`100% Ejecutable`', inline: true }
+                    { name: 'Compatibilidad móvil', value: '`Delta, Fluxus, etc.`', inline: true }
                 )
                 .setFooter({ text: 'Desarrollado con Zyrox Core Engine' })
                 .setTimestamp();
