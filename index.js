@@ -17,11 +17,11 @@ client.on('ready', () => {
     client.user.setActivity('Protegiendo Scripts ⚡', { type: ActivityType.Watching });
 });
 
-// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD EJECUTABLE ---
+// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD MONOLÍTICO ---
 function motorOfuscadorFuerte(codigoOriginal) {
-    let scriptProtegido = `-- [[ ZYROX VM OBFUSCATION v2.2 ]] --\n\n`;
+    let scriptProtegido = `-- [[ ZYROX VM OBFUSCATION v3.0 ]] --\n\n`;
     
-    // 1. Inyección del decodificador interno de Base64 en Lua para ejecuciones en memoria limpia
+    // 1. Inyección del decodificador interno de Base64 nativo en Lua
     scriptProtegido += `local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'\n`;
     scriptProtegido += `local function BufferDecode(data)\n`;
     scriptProtegido += `    data = string.gsub(data, '[^'..b..'=]', '')\n`;
@@ -47,40 +47,21 @@ function motorOfuscadorFuerte(codigoOriginal) {
     scriptProtegido += `    while true do end\n`;
     scriptProtegido += `end\n\n`;
 
-    // 3. Serialización del código original en bloques virtuales
-    const lineas = codigoOriginal.split('\n');
-    let tablaInstrucciones = {};
-    let contador = 100;
-    
-    lineas.forEach((linea) => {
-        if(linea.trim() === "" || linea.trim().startsWith("--")) return;
-        tablaInstrucciones[contador] = linea; 
-        contador++;
-    });
+    // 3. Convertir TODO el script completo a Base64 sin romper líneas ni bloques
+    const codigoCompletoBase64 = Buffer.from(codigoOriginal).toString('base64');
 
-    scriptProtegido += `local _vm_state = 100\n`;
-    scriptProtegido += `local _bytecode = {\n`;
-    
-    for (const [id, code] of Object.entries(tablaInstrucciones)) {
-        const bufferOculto = Buffer.from(code).toString('base64');
-        scriptProtegido += `    [${id}] = "${bufferOculto}",\n`;
-    }
-    scriptProtegido += `}\n\n`;
+    scriptProtegido += `local _encryptedSource = "${codigoCompletoBase64}"\n\n`;
 
-    // 4. El ciclo ejecutor de la VM utilizando loadstring compatible con exploits móviles
-    scriptProtegido += `while _bytecode[_vm_state] do\n`;
-    scriptProtegido += `    local _current = _bytecode[_vm_state]\n`;
-    scriptProtegido += `    local _decrypted = BufferDecode(_current)\n`;
-    scriptProtegido += `    local _loaded, _err = loadstring(_decrypted)\n`;
-    scriptProtegido += `    if _loaded then\n`;
-    scriptProtegido += `        local _status, _res = pcall(_loaded)\n`;
-    scriptProtegido += `        if not _status then\n`;
-    scriptProtegido += `            warn("Runtime Error: " .. tostring(_res))\n`;
-    scriptProtegido += `        end\n`;
-    scriptProtegido += `    else\n`;
-    scriptProtegido += `        warn("VM Compilation Error: " .. tostring(_err))\n`;
+    // 4. Ejecutor seguro en memoria (Carga todo el script unificado)
+    scriptProtegido += `local _decrypted = BufferDecode(_encryptedSource)\n`;
+    scriptProtegido += `local _loaded, _err = loadstring(_decrypted)\n\n`;
+    scriptProtegido += `if _loaded then\n`;
+    scriptProtegido += `    local _status, _res = pcall(_loaded)\n`;
+    scriptProtegido += `    if not _status then\n`;
+    scriptProtegido += `        warn("[Zyrox Runtime Error]: " .. tostring(_res))\n`;
     scriptProtegido += `    end\n`;
-    scriptProtegido += `    _vm_state = _vm_state + 1\n`;
+    scriptProtegido += `else\n`;
+    scriptProtegido += `    warn("[Zyrox VM Error]: Estructura corrupta de compilación: " .. tostring(_err))\n`;
     scriptProtegido += `end\n`;
     
     return scriptProtegido;
@@ -97,7 +78,7 @@ client.on('messageCreate', async (message) => {
             const embedError = new EmbedBuilder()
                 .setColor('#FF0055')
                 .setTitle('❌ Error de Archivo')
-                .setDescription('Debes adjuntar un archivo válido con extensión `.lua` o `.txt` para procesarlo en la VM.')
+                .setDescription('Debes adjuntar un archivo válido con extensión `.lua` o `.txt` para procesarlo.')
                 .setFooter({ text: 'Zyrox Engine' });
             
             return message.reply({ embeds: [embedError] });
@@ -106,7 +87,7 @@ client.on('messageCreate', async (message) => {
         const embedProcesando = new EmbedBuilder()
             .setColor('#00FFFF')
             .setTitle('🌀 Iniciando Virtualización...')
-            .setDescription(`Procesando \`${adjunto.name}\` a través de la Intense VM Structure.\nGenerando decodificadores dinámicos y capas anti-dumping...`)
+            .setDescription(`Procesando \`${adjunto.name}\` en bloque monolítico para evitar errores de sintaxis...`)
             .setTimestamp();
 
         const mensajeEstado = await message.reply({ embeds: [embedProcesando] });
@@ -124,11 +105,11 @@ client.on('messageCreate', async (message) => {
 
             const embedListo = new EmbedBuilder()
                 .setColor('#00FF66')
-                .setTitle('⚡ ¡Script Virtualizado con Éxito!')
-                .setDescription('La estructura de la VM ha sido adaptada. Es indetectable para bots comunes y 100% compatible con ejecutores móviles.')
+                .setTitle('⚡ ¡Script Protegido Correctamente!')
+                .setDescription('El código fue empaquetado en una sola capa de memoria limpia. Se eliminaron los fallos de cierre de variables.')
                 .addFields(
                     { name: 'Archivo Original', value: `\`${adjunto.name}\``, inline: true },
-                    { name: 'Compatibilidad móvil', value: '`Delta, Fluxus, etc.`', inline: true }
+                    { name: 'Motor', value: '`Zyrox Monolithic v3.0`', inline: true }
                 )
                 .setFooter({ text: 'Desarrollado con Zyrox Core Engine' })
                 .setTimestamp();
@@ -141,7 +122,7 @@ client.on('messageCreate', async (message) => {
             const embedFatal = new EmbedBuilder()
                 .setColor('#FF0000')
                 .setTitle('🚨 Error Interno')
-                .setDescription('El motor de la VM falló al compilar los opcodes del archivo.');
+                .setDescription('El motor falló al codificar el bloque principal.');
             
             await mensajeEstado.edit({ embeds: [embedFatal] });
         }
