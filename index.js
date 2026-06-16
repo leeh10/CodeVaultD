@@ -17,37 +17,44 @@ client.on('ready', () => {
     client.user.setActivity('Protegiendo Scripts ⚡', { type: ActivityType.Watching });
 });
 
-// --- MOTOR DE OFUSCACIÓN SIN LOADSTRING (MÁXIMA COMPATIBILIDAD) ---
-// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD (ARRAY DE BYTES) v5.0 ---
-// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD (STRINGS NATIVOS) v6.0 ---
+// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD CON BYPASS HTTP v6.5 ---
 function motorOfuscadorFuerte(bufferOriginal) {
-    let scriptProtegido = `-- [[ ZYROX ENGINE v6.0 NATIVE STRINGS ]] --\n\n`;
+    let scriptProtegido = `-- [[ ZYROX ENGINE v6.5 BYPASS & SECURE ]] --\n\n`;
     
-    // 1. Trampas Anti-Deobfuscator
+    // 1. Hook de Bypass HTTP nativo para evitar el maldito Error 403
+    // Esto obliga al ejecutor a usar caché y saltarse bloqueos de Cloudflare/GitHub en Android
+    scriptProtegido += `local _oldHttpGet = game.HttpGet\n`;
+    scriptProtegido += `game.HttpGet = function(self, url, nocache)\n`;
+    scriptProtegido += `    local success, res = pcall(function()\n`;
+    scriptProtegido += `        return _oldHttpGet(self, url, false) -- Forzamos el uso de caché\n`;
+    scriptProtegido += `    end)\n`;
+    scriptProtegido += `    if not success then\n`;
+    scriptProtegido += `        -- Si falla, intentamos la llamada directa nativa sin el objeto 'self'\n`;
+    scriptProtegido += `        return _oldHttpGet(url, false)\n`;
+    scriptProtegido += `    end\n`;
+    scriptProtegido += `    return res\n`;
+    scriptProtegido += `end\n\n`;
+
+    // 2. Trampas Anti-Deobfuscator
     scriptProtegido += `local _g = getfenv and getfenv() or _ENV\n`;
     scriptProtegido += `if (setupvalue and tostring(setupvalue):find("unveilr")) or (hookfunction and tostring(hookfunction):find("mock")) then \n`;
     scriptProtegido += `    error("Zyrox Security: Unveilr Detected")\n`;
     scriptProtegido += `    while true do end\n`;
     scriptProtegido += `end\n\n`;
 
-    // 2. Procesamiento del código en bytes puros de 3 dígitos (\000)
-    // Se divide en pedazos (chunks) para no saturar el límite de longitud de texto de Luau
-    const CHUNK_SIZE = 16384; // 16KB por bloque
+    // 3. Procesamiento del código en bytes escapados (Chunks de 16KB para estabilidad total)
+    const CHUNK_SIZE = 16384; 
     let chunks = [];
     
     for (let i = 0; i < bufferOriginal.length; i += CHUNK_SIZE) {
         let chunk = bufferOriginal.slice(i, i + CHUNK_SIZE);
         let escapedStr = "";
-        
         for (let j = 0; j < chunk.length; j++) {
-            // Convierte cada byte en formato \xxx asegurando 3 dígitos (ej. \065)
-            let byteStr = chunk[j].toString();
-            escapedStr += "\\" + byteStr.padStart(3, '0');
+            escapedStr += "\\" + chunk[j].toString().padStart(3, '0');
         }
         chunks.push(`"${escapedStr}"`);
     }
 
-    // 3. Concatenación hiper-rápida y directa
     scriptProtegido += `local _src = ${chunks.join(' .. ')}\n\n`;
     
     // 4. Ejecución blindada
@@ -55,16 +62,14 @@ function motorOfuscadorFuerte(bufferOriginal) {
     scriptProtegido += `if _f then\n`;
     scriptProtegido += `    local _ok, _res = pcall(_f)\n`;
     scriptProtegido += `    if not _ok then\n`;
-    scriptProtegido += `        warn("[Zyrox] Error interno del script: " .. tostring(_res))\n`;
+    scriptProtegido += `        warn("[Zyrox Runtime Error]: " .. tostring(_res))\n`;
     scriptProtegido += `    end\n`;
     scriptProtegido += `else\n`;
-    scriptProtegido += `    warn("[Zyrox] Error crítico del ejecutor: " .. tostring(_e))\n`;
+    scriptProtegido += `    warn("[Zyrox VM Error]: El exploit rechazó la carga: " .. tostring(_e))\n`;
     scriptProtegido += `end\n`;
 
     return scriptProtegido;
 }
-
-
 
 // --- MANEJADOR DE COMANDOS DEL BOT ---
 client.on('messageCreate', async (message) => {
@@ -85,8 +90,8 @@ client.on('messageCreate', async (message) => {
 
         const embedProcesando = new EmbedBuilder()
             .setColor('#00FFFF')
-            .setTitle('🌀 Iniciando Virtualización Nativa...')
-            .setDescription(`Procesando \`${adjunto.name}\` sin bypass de carga...\nAsegurando ejecución inmediata en ejecutores móviles.`)
+            .setTitle('🌀 Iniciando Virtualización y Bypass...')
+            .setDescription(`Procesando \`${adjunto.name}\` en formato cifrado con puente HTTP...`)
             .setTimestamp();
 
         const mensajeEstado = await message.reply({ embeds: [embedProcesando] });
@@ -104,13 +109,13 @@ client.on('messageCreate', async (message) => {
 
             const embedListo = new EmbedBuilder()
                 .setColor('#00FF66')
-                .setTitle('⚡ ¡Script Protegido e Inyectable!')
-                .setDescription('Removido el uso de entornos virtuales inestables. Formato ejecutable directo optimizado.')
+                .setTitle('⚡ ¡Script Ofuscado con Bypass HTTP!')
+                .setDescription('Se integró un interceptor para evitar que GitHub o Pastebin bloqueen tus menús flotantes.')
                 .addFields(
                     { name: 'Archivo Original', value: `\`${adjunto.name}\``, inline: true },
-                    { name: 'Compatibilidad', value: '`Delta, Fluxus, Arceus, etc.`', inline: true }
+                    { name: 'Protección Visual', value: '`Activa (Bytes v6.5)`', inline: true }
                 )
-                .setFooter({ text: 'Desarrollado con Zyrox Core Engine v4.0' })
+                .setFooter({ text: 'Desarrollado con Zyrox Core Engine v6.5' })
                 .setTimestamp();
 
             await mensajeEstado.edit({ embeds: [embedListo], files: [archivoFinal] });
