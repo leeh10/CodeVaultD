@@ -19,29 +19,38 @@ client.on('ready', () => {
 
 // --- MOTOR DE OFUSCACIÓN SIN LOADSTRING (MÁXIMA COMPATIBILIDAD) ---
 // --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD (ARRAY DE BYTES) v5.0 ---
+// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD (STRINGS NATIVOS) v6.0 ---
 function motorOfuscadorFuerte(bufferOriginal) {
-    // 1. Transformamos cada letra/símbolo del script en su valor numérico puro
-    const bytes = Array.from(bufferOriginal);
+    let scriptProtegido = `-- [[ ZYROX ENGINE v6.0 NATIVE STRINGS ]] --\n\n`;
     
-    let scriptProtegido = `-- [[ ZYROX ENGINE v5.0 BYTECODE SECURE ]] --\n\n`;
-    
-    // 2. Trampas Anti-Deobfuscator
+    // 1. Trampas Anti-Deobfuscator
     scriptProtegido += `local _g = getfenv and getfenv() or _ENV\n`;
     scriptProtegido += `if (setupvalue and tostring(setupvalue):find("unveilr")) or (hookfunction and tostring(hookfunction):find("mock")) then \n`;
     scriptProtegido += `    error("Zyrox Security: Unveilr Detected")\n`;
     scriptProtegido += `    while true do end\n`;
     scriptProtegido += `end\n\n`;
 
-    // 3. LA BÓVEDA: Aquí metemos todo tu código pero como puros números indescifrables
-    // Nadie va a poder leer tu código original aquí.
-    scriptProtegido += `local _b = {${bytes.join(',')}}\n\n`;
+    // 2. Procesamiento del código en bytes puros de 3 dígitos (\000)
+    // Se divide en pedazos (chunks) para no saturar el límite de longitud de texto de Luau
+    const CHUNK_SIZE = 16384; // 16KB por bloque
+    let chunks = [];
     
-    // 4. Reconstrucción hiper-rápida usando la memoria de Roblox
-    scriptProtegido += `local _s = {}\n`;
-    scriptProtegido += `for i = 1, #_b do _s[i] = string.char(_b[i]) end\n`;
-    scriptProtegido += `local _src = table.concat(_s)\n\n`;
+    for (let i = 0; i < bufferOriginal.length; i += CHUNK_SIZE) {
+        let chunk = bufferOriginal.slice(i, i + CHUNK_SIZE);
+        let escapedStr = "";
+        
+        for (let j = 0; j < chunk.length; j++) {
+            // Convierte cada byte en formato \xxx asegurando 3 dígitos (ej. \065)
+            let byteStr = chunk[j].toString();
+            escapedStr += "\\" + byteStr.padStart(3, '0');
+        }
+        chunks.push(`"${escapedStr}"`);
+    }
+
+    // 3. Concatenación hiper-rápida y directa
+    scriptProtegido += `local _src = ${chunks.join(' .. ')}\n\n`;
     
-    // 5. Ejecución blindada
+    // 4. Ejecución blindada
     scriptProtegido += `local _f, _e = loadstring(_src, "@ZyroxPhantom")\n`;
     scriptProtegido += `if _f then\n`;
     scriptProtegido += `    local _ok, _res = pcall(_f)\n`;
@@ -49,11 +58,12 @@ function motorOfuscadorFuerte(bufferOriginal) {
     scriptProtegido += `        warn("[Zyrox] Error interno del script: " .. tostring(_res))\n`;
     scriptProtegido += `    end\n`;
     scriptProtegido += `else\n`;
-    scriptProtegido += `    warn("[Zyrox] El ejecutor no soporta la carga dinámica: " .. tostring(_e))\n`;
+    scriptProtegido += `    warn("[Zyrox] Error crítico del ejecutor: " .. tostring(_e))\n`;
     scriptProtegido += `end\n`;
 
     return scriptProtegido;
 }
+
 
 
 // --- MANEJADOR DE COMANDOS DEL BOT ---
