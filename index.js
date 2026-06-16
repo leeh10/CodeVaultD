@@ -17,11 +17,11 @@ client.on('ready', () => {
     client.user.setActivity('Protegiendo Scripts ⚡', { type: ActivityType.Watching });
 });
 
-// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD MONOLÍTICO ---
-function motorOfuscadorFuerte(codigoOriginal) {
-    let scriptProtegido = `-- [[ ZYROX VM OBFUSCATION v3.0 ]] --\n\n`;
+// --- MOTOR DE OFUSCACIÓN DE ALTA SEGURIDAD ULTRA-ESTABLE ---
+function motorOfuscadorFuerte(bufferOriginal) {
+    let scriptProtegido = `-- [[ ZYROX VM OBFUSCATION v3.5 ULTRA ]] --\n\n`;
     
-    // 1. Inyección del decodificador interno de Base64 nativo en Lua
+    // 1. Inyección del decodificador interno de Base64 nativo optimizado para Luau/Roblox
     scriptProtegido += `local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'\n`;
     scriptProtegido += `local function BufferDecode(data)\n`;
     scriptProtegido += `    data = string.gsub(data, '[^'..b..'=]', '')\n`;
@@ -47,21 +47,21 @@ function motorOfuscadorFuerte(codigoOriginal) {
     scriptProtegido += `    while true do end\n`;
     scriptProtegido += `end\n\n`;
 
-    // 3. Convertir TODO el script completo a Base64 sin romper líneas ni bloques
-    const codigoCompletoBase64 = Buffer.from(codigoOriginal).toString('base64');
+    // 3. Conversión BINARIA DIRECTA (Evita corrupción de caracteres en scripts gigantes)
+    const codigoCompletoBase64 = bufferOriginal.toString('base64');
 
     scriptProtegido += `local _encryptedSource = "${codigoCompletoBase64}"\n\n`;
 
-    // 4. Ejecutor seguro en memoria (Carga todo el script unificado)
+    // 4. Ejecutor seguro en memoria con debugger integrado para la consola de Roblox
     scriptProtegido += `local _decrypted = BufferDecode(_encryptedSource)\n`;
-    scriptProtegido += `local _loaded, _err = loadstring(_decrypted)\n\n`;
+    scriptProtegido += `local _loaded, _err = loadstring(_decrypted, "@ZyroxEngine")\n\n`;
     scriptProtegido += `if _loaded then\n`;
     scriptProtegido += `    local _status, _res = pcall(_loaded)\n`;
     scriptProtegido += `    if not _status then\n`;
     scriptProtegido += `        warn("[Zyrox Runtime Error]: " .. tostring(_res))\n`;
     scriptProtegido += `    end\n`;
     scriptProtegido += `else\n`;
-    scriptProtegido += `    warn("[Zyrox VM Error]: Estructura corrupta de compilación: " .. tostring(_err))\n`;
+    scriptProtegido += `    warn("[Zyrox VM Error]: Error crítico de empaquetado: " .. tostring(_err))\n`;
     scriptProtegido += `end\n`;
     
     return scriptProtegido;
@@ -78,7 +78,7 @@ client.on('messageCreate', async (message) => {
             const embedError = new EmbedBuilder()
                 .setColor('#FF0055')
                 .setTitle('❌ Error de Archivo')
-                .setDescription('Debes adjuntar un archivo válido con extensión `.lua` o `.txt` para procesarlo.')
+                .setDescription('Debes adjuntar un archivo válido con extensión `.lua` o `.txt`.')
                 .setFooter({ text: 'Zyrox Engine' });
             
             return message.reply({ embeds: [embedError] });
@@ -86,32 +86,34 @@ client.on('messageCreate', async (message) => {
 
         const embedProcesando = new EmbedBuilder()
             .setColor('#00FFFF')
-            .setTitle('🌀 Iniciando Virtualización...')
-            .setDescription(`Procesando \`${adjunto.name}\` en bloque monolítico para evitar errores de sintaxis...`)
+            .setTitle('🌀 Iniciando Virtualización de Alta Carga...')
+            .setDescription(`Procesando \`${adjunto.name}\` de forma binaria indexada...\nSoportando scripts de gran tamaño sin corrupción.`)
             .setTimestamp();
 
         const mensajeEstado = await message.reply({ embeds: [embedProcesando] });
 
         try {
-            const respuesta = await axios.get(adjunto.url);
-            const codigoOriginal = respuesta.data;
+            // CAMBIO CLAVE: Descargar el archivo como un Buffer binario (arraybuffer)
+            const respuesta = await axios.get(adjunto.url, { responseType: 'arraybuffer' });
+            const bufferArchivo = Buffer.from(respuesta.data);
 
-            const codigoOfuscado = motorOfuscadorFuerte(codigoOriginal);
+            // Pasamos el Buffer directo al ofuscador, sin transformarlo en texto intermedio
+            const codigoOfuscado = motorOfuscadorFuerte(bufferArchivo);
 
             const nombreSalida = `zyrox_${adjunto.name}`;
-            fs.writeFileSync(nombreSalida, codigoOfuscado);
+            fs.writeFileSync(nombreSalida, codigoOfuscado, 'utf-8');
 
             const archivoFinal = new AttachmentBuilder(nombreSalida);
 
             const embedListo = new EmbedBuilder()
                 .setColor('#00FF66')
-                .setTitle('⚡ ¡Script Protegido Correctamente!')
-                .setDescription('El código fue empaquetado en una sola capa de memoria limpia. Se eliminaron los fallos de cierre de variables.')
+                .setTitle('⚡ ¡Script Ofuscado al 100%!')
+                .setDescription('Empaquetado binario completado. Compatible con menús flotantes masivos y ejecutores de Android.')
                 .addFields(
                     { name: 'Archivo Original', value: `\`${adjunto.name}\``, inline: true },
-                    { name: 'Motor', value: '`Zyrox Monolithic v3.0`', inline: true }
+                    { name: 'Estabilidad', value: '`100% Anti-Corrupción`', inline: true }
                 )
-                .setFooter({ text: 'Desarrollado con Zyrox Core Engine' })
+                .setFooter({ text: 'Desarrollado con Zyrox Core Engine v3.5' })
                 .setTimestamp();
 
             await mensajeEstado.edit({ embeds: [embedListo], files: [archivoFinal] });
@@ -121,8 +123,8 @@ client.on('messageCreate', async (message) => {
             console.error(error);
             const embedFatal = new EmbedBuilder()
                 .setColor('#FF0000')
-                .setTitle('🚨 Error Interno')
-                .setDescription('El motor falló al codificar el bloque principal.');
+                .setTitle('🚨 Error de Memoria Buffer')
+                .setDescription('El bot no pudo procesar los datos binarios del archivo adjunto.');
             
             await mensajeEstado.edit({ embeds: [embedFatal] });
         }
