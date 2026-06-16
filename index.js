@@ -84,12 +84,12 @@ client.on('messageCreate', async (message) => {
     if (message.content.startsWith('!obfuscate') || message.content.startsWith('!ofuscar')) {
         const adjunto = message.attachments.first();
 
-        // Verificar si el usuario subió un archivo .lua
-        if (!adjunto || !adjunto.name.endsWith('.lua')) {
+        // VALIDACIÓN ACTUALIZADA: Verifica si el archivo termina en .lua O en .txt
+        if (!adjunto || (!adjunto.name.endsWith('.lua') && !adjunto.name.endsWith('.txt'))) {
             const embedError = new EmbedBuilder()
                 .setColor('#FF0055') // Rojo neón
                 .setTitle('❌ Error de Archivo')
-                .setDescription('Debes adjuntar un archivo válido con extensión `.lua` para procesarlo en la VM.')
+                .setDescription('Debes adjuntar un archivo válido con extensión `.lua` o `.txt` para procesarlo en la VM.')
                 .setFooter({ text: 'Zyrox Engine' });
             
             return message.reply({ embeds: [embedError] });
@@ -105,14 +105,14 @@ client.on('messageCreate', async (message) => {
         const mensajeEstado = await message.reply({ embeds: [embedProcesando] });
 
         try {
-            // Descargar el script original enviado por el usuario
+            // Descargar el script original enviado por el usuario desde los servidores de Discord
             const respuesta = await axios.get(adjunto.url);
             const codigoOriginal = respuesta.data;
 
             // Procesar el código a través de nuestro motor fuerte
             const codigoOfuscado = motorOfuscadorFuerte(codigoOriginal);
 
-            // Guardar temporalmente el archivo protegido en el almacenamiento local
+            // Guardar temporalmente el archivo protegido manteniendo el nombre original (.lua o .txt)
             const nombreSalida = `zyrox_${adjunto.name}`;
             fs.writeFileSync(nombreSalida, codigoOfuscado);
 
