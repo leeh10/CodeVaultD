@@ -11,7 +11,7 @@ const client = new Client({
     ]
 });
 
-const TOKEN = "TU_BOT_TOKEN_AQUI"; // Coloca aquí el token de tu bot de Discord
+const TOKEN = process.env.MI_BOT_TOKEN_AQUI;
 
 client.on('ready', () => {
     console.log(`[+] Bot conectado como: ${client.user.tag}`);
